@@ -16,51 +16,76 @@ PADDLE_HEIGHT = 20 * WINDOW_HEIGHT / 720
 PADDLE_WIDTH = 5 * WINDOW_HEIGHT / 720
 BALL_RADIOUS = 5 * WINDOW_HEIGHT / 720
 
--- impprt push library
+-- import libraries
+Class = require "class"
 push = require "push"
 
+require "Paddle"
+require "Ball"
 
--- Handle touch inputs
+--------------------------
+-- Handle touch inputs  --
+--------------------------
+
+
 local function handle_touches(touch, dt) 
+  -- Reset paddle speed
+  paddle2.dy = 0
+  paddle1.dy = 0
+
   local x, y = love.touch.getPosition(touch)
-  if x < WINDOW_WIDTH / 2 then -- player 1
+  -- start and reset in the middle
+  if x > WINDOW_WIDTH / 2 - 30 and x < WINDOW_WIDTH / 2 + 30
+    and y > WINDOW_HEIGHT / 2 - 30 and y < WINDOW_HEIGHT + 30 then
+    if touch_delay > 0.2 then
+      touch_delay = 0
+      if game_state == 'start' then
+        game_state = 'play'
+      elseif game_state == 'play' then
+        game_state = 'start'
+        ball:reset()
+      end
+    end
+    -------------------------
+    --   PADDLE MOVEMENT   --
+    -------------------------
+    
+  elseif x < WINDOW_WIDTH / 2 then -- player 1
     if y < WINDOW_HEIGHT / 2 then -- Go up
-      player1Y = math.max(0 + WINDOW_BORDER, player1Y - PADDLE_SPEED * dt)            else -- Go down
-      player1Y = math.min(VERTUAL_HEIGHT - WINDOW_BORDER - PADDLE_HEIGHT, 
-      player1Y + PADDLE_SPEED * dt)
+      paddle1.dy = -PADDLE_SPEED
+    else -- Go down
+      paddle1.dy = PADDLE_SPEED
     end
   else -- player2
     if y < WINDOW_HEIGHT / 2 then -- Go up
-      player2Y = math.max(0 + WINDOW_BORDER, player2Y - PADDLE_SPEED * dt)
+      paddle2.dy = -PADDLE_SPEED
     else -- Go down
-      player2Y = math.min(VERTUAL_HEIGHT - WINDOW_BORDER - PADDLE_HEIGHT,
-      player2Y + PADDLE_SPEED * dt)
+      paddle2.dy = PADDLE_SPEED
     end
   end
 end
 
--- handle keyboard input
+----------------------------
+-- handle keyboard input  --
+----------------------------
+
 local function handle_keyboard(dt)
   if love.keyboard.isDown('w') then
-    player1Y = math.max(0 + WINDOW_BORDER, player1Y - PADDLE_SPEED * dt)
+    paddle1.dy = -PADDLE_SPEED
   elseif love.keyboard.isDown('s') then
-    player1Y = math.min(VERTUAL_HEIGHT - WINDOW_BORDER - PADDLE_HEIGHT,
-    player1Y + PADDLE_SPEED * dt)
-  elseif love.keyboard.isDown('up') then
-    player2Y = math.max(0 + WINDOW_BORDER, player2Y - PADDLE_SPEED * dt)
+    paddle1.dy = PADDLE_SPEED
+  else 
+    paddle1.dy = 0
+  end
+  if love.keyboard.isDown('up') then
+    paddle2.dy = -PADDLE_SPEED
   elseif love.keyboard.isDown('down') then
-    player2Y = math.min(VERTUAL_HEIGHT - WINDOW_BORDER - PADDLE_HEIGHT,
-    player2Y + PADDLE_SPEED * dt)
+    paddle2.dy = PADDLE_SPEED
+  else
+    paddle2.dy = 0
   end
 end
 
--- Update ball location
-local function update_ball()
-  if game_state == "play" then
-    ballX = ballX + ballDx * dt
-    ballY = ballY + ballDy * dt
-  end
-end
 
 local function draw_window()
   local r, g, b, a = love.graphics.getColor()
@@ -102,7 +127,12 @@ local function draw_scores()
   -- resotre font
   love.graphics.setFont(font)
 end
---[[ Runs whne first love loads up ]]
+
+
+-------------------------------------------
+--  [[ Runs whne first love loads up ]]  --
+-------------------------------------------
+
 function love.load()
 
   -- Seed 5he random genarator
@@ -113,23 +143,33 @@ function love.load()
   small_font = love.graphics.newFont('fonts/font.ttf', 8)
   score_font = love.graphics.newFont('fonts/font.ttf', 32)
 
+  love.window.setTitle('Pong')
+
   player1Score = 0
   player2Score = 0
 
-  player1Y = 20 + WINDOW_BORDER
-  player2Y = VERTUAL_HEIGHT - PADDLE_HEIGHT - 20 - WINDOW_BORDER
+  --------------------------
+  --  Initialize paddles  --
+  --------------------------
+  
+  paddle1 = Paddle(5 + WINDOW_BORDER, 20 + WINDOW_BORDER,
+    PADDLE_WIDTH, PADDLE_HEIGHT)
+  paddle2 = Paddle(VERTUAL_WIDTH - 5 - PADDLE_WIDTH - WINDOW_BORDER,
+    VERTUAL_HEIGHT - PADDLE_HEIGHT - 20 - WINDOW_BORDER,
+    PADDLE_WIDTH, PADDLE_HEIGHT)
 
-  ballX = (VERTUAL_WIDTH + WINDOW_BORDER) / 2 - BALL_RADIOUS / 2
-  ballY = (VERTUAL_HEIGHT + WINDOW_BORDER) / 2 - BALL_RADIOUS / 2
+  --------------------------------------------------------------
+  --   Draw ball at center of screen and set random velocity  --
+  --------------------------------------------------------------
+  
+  local ballX = (VERTUAL_WIDTH + WINDOW_BORDER) / 2 - BALL_RADIOUS / 2
+  local ballY = (VERTUAL_HEIGHT + WINDOW_BORDER) / 2 - BALL_RADIOUS / 2
+  ball = Ball(ballX, ballY, BALL_RADIOUS)
 
-  local ball_max_dx = math.floor( 100 * VERTUAL_WIDTH / 1280 )
-  local ball_max_dy = math.floor(50 * VERTUAL_HEIGHT / 720)
-  ballDx = math.floor(( math.random(2) == 1) and -ball_max_dx
-  or ball_max_dx)
-  ballDy = math.floor(math.random(-ball_max_dy, ball_max_dy)) 
-
-  -- Set window mode
-  --love.window.setMode(WINDOW_WIDTH, WINDOW_HEIGHT, {
+  -----------------------
+  --  Set window mode  --
+  -----------------------
+  
   push:setupScreen(VERTUAL_WIDTH, VERTUAL_HEIGHT,
   WINDOW_WIDTH, WINDOW_HEIGHT, {
     fullscreen = true,
@@ -138,6 +178,7 @@ function love.load()
   })
 
   game_state = "start"
+  touch_delay = 0
 
 end
 
@@ -145,17 +186,26 @@ function love.update(dt)
   -- Key controls
   handle_keyboard(dt)
   --Touch controle
+  touch_delay = touch_delay + dt
   local touches = love.touch.getTouches()
   for i, touch in ipairs(touches) do
     handle_touches(touch, dt)
   end
-  --------------
-  -- Update ball
-  --------------
-  update_ball()
+  ----------------------
+  --  Update paddles  --
+  ----------------------
+ paddle1:update(dt)
+ paddle2:update(dt)
+  -----------------
+  -- Update ball --
+  -----------------
+  ball:update(dt)
 end
 
---[[ Runs every time after love.update ]]
+-----------------------------------------------
+--  [[ Runs every time after love.update ]]  --
+-----------------------------------------------
+
 function love.draw()
   push:apply('start')
   -- Draw Border
@@ -182,27 +232,22 @@ function love.draw()
   draw_scores()
 
   -- Draw the ball
-  love.graphics.rectangle('fill', 
-  ballX, 
-  ballY, 
-  BALL_RADIOUS, BALL_RADIOUS)
-
-
+  ball:render()
 
   -- Draw the padles
-  love.graphics.rectangle('fill',
-  5 + WINDOW_BORDER, player1Y, 
-  PADDLE_WIDTH, PADDLE_HEIGHT)
+  paddle1:render()
+  paddle2:render()
 
-  love.graphics.rectangle('fill', 
-  VERTUAL_WIDTH - 5 - PADDLE_WIDTH - WINDOW_BORDER, 
-  player2Y, 
-  PADDLE_WIDTH, PADDLE_HEIGHT)
+  -- Diaplay FPS
+  displayFPS()
 
   push:apply('end')
 end
 
--- [[ key press events ]]
+------------------------------
+--  [[ key press events ]]  --
+------------------------------
+
 function love.keypressed(key)
   if key == 'escape' then
     love.event.quit()
@@ -217,3 +262,15 @@ function love.keypressed(key)
   end
 end
 
+
+function displayFPS()
+  local r, g, b, a = love.graphics.getColor()
+  local font = love.graphics.getFont()
+
+  love.graphics.setColor(0, 1, 0, 1)
+  love.graphics.setFont(small_font)
+  love.graphics.print('FPS : ' .. tostring(love.timer.getFPS()), 40, 20)
+
+  love.graphics.setColor(r, g, b, a)
+  love.graphics.setFont(font)
+end
