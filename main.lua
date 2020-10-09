@@ -29,9 +29,9 @@ require "Ball"
 
 
 local function handle_touches(touch, dt) 
-  -- Reset paddle speed
-  paddle2.dy = 0
-  paddle1.dy = 0
+  -- Reset player speed
+  player2.dy = 0
+  player1.dy = 0
 
   local x, y = love.touch.getPosition(touch)
   -- start and reset in the middle
@@ -52,15 +52,15 @@ local function handle_touches(touch, dt)
     
   elseif x < WINDOW_WIDTH / 2 then -- player 1
     if y < WINDOW_HEIGHT / 2 then -- Go up
-      paddle1.dy = -PADDLE_SPEED
+      player1.dy = -PADDLE_SPEED
     else -- Go down
-      paddle1.dy = PADDLE_SPEED
+      player1.dy = PADDLE_SPEED
     end
   else -- player2
     if y < WINDOW_HEIGHT / 2 then -- Go up
-      paddle2.dy = -PADDLE_SPEED
+      player2.dy = -PADDLE_SPEED
     else -- Go down
-      paddle2.dy = PADDLE_SPEED
+      player2.dy = PADDLE_SPEED
     end
   end
 end
@@ -71,18 +71,18 @@ end
 
 local function handle_keyboard(dt)
   if love.keyboard.isDown('w') then
-    paddle1.dy = -PADDLE_SPEED
+    player1.dy = -PADDLE_SPEED
   elseif love.keyboard.isDown('s') then
-    paddle1.dy = PADDLE_SPEED
+    player1.dy = PADDLE_SPEED
   else 
-    paddle1.dy = 0
+    player1.dy = 0
   end
   if love.keyboard.isDown('up') then
-    paddle2.dy = -PADDLE_SPEED
+    player2.dy = -PADDLE_SPEED
   elseif love.keyboard.isDown('down') then
-    paddle2.dy = PADDLE_SPEED
+    player2.dy = PADDLE_SPEED
   else
-    paddle2.dy = 0
+    player2.dy = 0
   end
 end
 
@@ -149,12 +149,12 @@ function love.load()
   player2Score = 0
 
   --------------------------
-  --  Initialize paddles  --
+  --  Initialize players  --
   --------------------------
   
-  paddle1 = Paddle(5 + WINDOW_BORDER, 20 + WINDOW_BORDER,
+  player1 = Paddle(5 + WINDOW_BORDER, 20 + WINDOW_BORDER,
     PADDLE_WIDTH, PADDLE_HEIGHT)
-  paddle2 = Paddle(VERTUAL_WIDTH - 5 - PADDLE_WIDTH - WINDOW_BORDER,
+  player2 = Paddle(VERTUAL_WIDTH - 5 - PADDLE_WIDTH - WINDOW_BORDER,
     VERTUAL_HEIGHT - PADDLE_HEIGHT - 20 - WINDOW_BORDER,
     PADDLE_WIDTH, PADDLE_HEIGHT)
 
@@ -192,13 +192,23 @@ function love.update(dt)
     handle_touches(touch, dt)
   end
   ----------------------
-  --  Update paddles  --
+  --  Update players  --
   ----------------------
- paddle1:update(dt)
- paddle2:update(dt)
+ player1:update(dt)
+ player2:update(dt)
   -----------------
   -- Update ball --
   -----------------
+  if ball:collides(player1) or ball:collides(player2) then
+    ball.dx = -ball.dx
+  end
+  if ball.y <= 0 + WINDOW_BORDER then
+    ball.dy = -ball.dy
+    ball.y = 0
+  elseif ball.y >= VERTUAL_HEIGHT - WINDOW_BORDER - ball.radius then
+    ball.dy = -ball.dy
+    ball.y = VERTUAL_HEIGHT - WINDOW_BORDER - ball.radius
+  end
   ball:update(dt)
 end
 
@@ -235,8 +245,8 @@ function love.draw()
   ball:render()
 
   -- Draw the padles
-  paddle1:render()
-  paddle2:render()
+  player1:render()
+  player2:render()
 
   -- Diaplay FPS
   displayFPS()

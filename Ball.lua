@@ -35,3 +35,16 @@ function Ball:render()
 	self.y, 
   self.radius, self.radius)	
 end
+
+function Ball:collides(box)
+	if self.x > box.x + box.width or
+		self.x + self.radius < box.x then
+		return false
+	elseif self.y > box.y + box.height or
+		self.y + self.radius < box.y then
+		return false
+	else
+		return true
+	end
+end
+
