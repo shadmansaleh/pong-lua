@@ -18,8 +18,13 @@ function Paddle:update(dt)
 end
 
 function Paddle:render()
+  local r, g, b, a = love.graphics.getColor()
+  love.graphics.setColor(20 / 255, 240 / 255, 0 / 255, 1)
+
   love.graphics.rectangle('fill',
   self.x, self.y, 
   self.width, self.height)	
+
+  love.graphics.setColor(r, g, b, a)
 end
 
