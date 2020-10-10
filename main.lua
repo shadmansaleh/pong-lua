@@ -23,6 +23,7 @@ Class = require "class"
 push = require "push"
 ai = require "Ai"
 
+require "Button"
 require "Paddle"
 require "Ball"
 
@@ -230,10 +231,16 @@ function love.update(dt)
   if ball:collides(player1) then
     ball.dx = -ball.dx
     ball.x = player1.x + 2 * player1.width
+		local random_speed_boost = math.random(50) + player1.dy * 0.2
+		ball.dy = ball.dy + random_speed_boost * 
+			math.abs((player1.y + player1.height / 2) - (ball.y + ball.radius / 2)) / player1.height
 		sounds.paddle_hit:play()
   elseif ball:collides(player2) then
     ball.dx = -ball.dx
     ball.x = player2.x - player2.width
+		random_speed_boost = math.random(50) + player2.dy * 0.2
+		ball.dy = ball.dy + random_speed_boost * 
+			math.abs((player2.y + player2.height / 2) - (ball.y + ball.radius / 2)) / player2.height
 		sounds.paddle_hit:play()
   end
   if ball.y <= 0 + WINDOW_BORDER then

@@ -15,8 +15,8 @@ function Ball:reset(playerNo)
   --self.x = (VERTUAL_WIDTH + WINDOW_BORDER) / 2 - self.radius / 2
   --self.y = (VERTUAL_HEIGHT + WINDOW_BORDER) / 2 - self.radius / 2
 
-  local ball_max_dx = math.floor( 100 * WINDOW_WIDTH / 1280 )
-  local ball_max_dy = math.floor(50 * WINDOW_HEIGHT / 720) * 1.5
+  local ball_max_dx = math.floor( 250 * WINDOW_WIDTH / 1280 )
+  local ball_max_dy = math.floor(140 * WINDOW_HEIGHT / 720) * 1.5
   self.dx = math.floor(( playerNo == 1) and ball_max_dx
   or -ball_max_dx)
   self.dy = math.floor(math.random(-ball_max_dy, ball_max_dy)) 
